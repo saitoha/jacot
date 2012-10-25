@@ -1,6 +1,6 @@
 
-jacot - Japanese Auto-detect Conversion On Tty
-==============================================
+jacot - Japanese Auto character set Conversion On Tty
+=====================================================
 
 == Overview
  Provides the auto-conversion filter supports ell-known Japanese Encodings(CP932/EUC-JP).
