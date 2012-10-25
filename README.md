@@ -4,7 +4,7 @@ jacot - Japanese Auto character set Conversion On Tty
 
 Overview
 --------
- Provides the auto-conversion filter supports ell-known Japanese Encodings(CP932/EUC-JP).
+ Provides the auto-conversion filter supports well-known Japanese Encodings(CP932/EUC-JP).
 
 Install
 -------
