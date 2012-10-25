@@ -164,7 +164,10 @@ class JapaneseScanner(tff.Scanner):
                     self.__utf8_state = self.__utf8_state << 6 | c & 0x3f
                     self.__count -= 1
                     if self.__count == 0:
-                        yield self.__utf8_state
+                        if self.__utf8_state < 0x80:
+                            yield 0x3f
+                        else:
+                            yield self.__utf8_state
                         self.__count = 0
                         self.__utf8_state = 0
                         #self.__hint = HINT_UTF8
@@ -435,11 +438,12 @@ def start():
     parser.add_option('-l', '--lang', dest='lang',
                       help='override LANG environment variable')
 
-    parser.add_option('-o', '--outenc', dest='outenc', default='UTF-8',
+    parser.add_option('-o', '--outenc', dest='enc', default='UTF-8',
                       help='set output encoding')
 
     (options, args) = parser.parse_args()
 
+    # retrive starting command
     if len(args) > 0:
         command = args[0]
     elif not os.getenv('SHELL') is None:
@@ -447,6 +451,7 @@ def start():
     else:
         command = '/bin/sh'
 
+    # retrive TERM setting
     if not options.term is None:
         term = options.term
     elif not os.getenv('TERM') is None:
@@ -454,6 +459,7 @@ def start():
     else:
         term = 'xterm'
 
+    # retrive LANG setting
     if not options.lang is None:
         lang = options.term
     elif not os.getenv('LANG') is None:
@@ -461,7 +467,8 @@ def start():
     else:
         lang = 'ja_JP.UTF-8'
 
-    outenc = options.outenc
+    # retrive terminal encoding setting
+    outenc = options.enc
 
     if command == '-':
         # wait for incoming data
