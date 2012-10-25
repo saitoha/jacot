@@ -34,7 +34,7 @@ Example
  あいうえお今日は≠〆＞
 ```
 
-=== Example 2: Read from stdin, without TTY session
+### Example 2: Read from stdin, without TTY session
 
 ```
  $ LANG=ja_JP.UTF-8 $SHELL
