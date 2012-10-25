@@ -22,9 +22,9 @@ Usage
   -o ENC, --outenc=ENC  set output encoding
 </pre>
 
-### Example
+### Example:
 
-#### Create auto-conversion TTY session
+#### 1. Create auto-conversion TTY session, like cocot.
 
 ```
  $ LANG=ja_JP.UTF-8 $SHELL
@@ -35,11 +35,42 @@ Usage
  あいうえお今日は≠〆＞
 ```
 
-#### Read from stdin, without TTY session
+#### 2. Read from stdin, without TTY session, just like nkf.
 
 ```
  $ LANG=ja_JP.UTF-8 $SHELL
  $ '三 ┏( ^o^)┛' | iconv -t eucjp | jacot
  三 ┏( ^o^)┛
 ```
+
+#### 3. Set terminal encoding
+
+```
+ $ LANG=ja_JP.EUC-JP $SHELL
+ $ jacot -o eucjp
+ $ '三 ┏( ^o^)┛' | iconv -t sjis
+ 三 ┏( ^o^)┛
+```
+
+How It Works
+------------
+Comming soon...
+
+Reference
+---------
+### cocot - COde COnverter on Tty http://vmi.jp/software/cygwin/cocot.html
+### cygwin ck terminal emulator http://www.geocities.jp/meir000/ck/ 
+### Unicode Text Editor MinEd http://towo.net/mined/
+### libfep https://github.com/ueno/libfep
+
+TODO
+-----
+### - Improve conversion algorithm (ck)
+### - Glyph substitution or replacement mechanism with considering East Asian Width. (cocot)
+### - Auto terminal encodings detection. (MinEd)
+### - Switch auto detection on/off setting with private sequence "DECSET/DECRST 8850".
+### - Improve Terminal Filter Framework(TFF), support plugin architecture.
+### - libfep like API/language binding, socket connection support
+### - Support Python 3.x
+
 
