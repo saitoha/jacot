@@ -20,10 +20,9 @@ Usage
   -l LANG, --lang=LANG  override LANG environment variable
   -o ENC, --outenc=ENC  set output encoding
 
-Example
-------- 
+### Example
 
-### Example 1: Create auto-conversion TTY session
+#### Create auto-conversion TTY session
 
 ```
  $ LANG=ja_JP.UTF-8 $SHELL
@@ -34,7 +33,7 @@ Example
  あいうえお今日は≠〆＞
 ```
 
-### Example 2: Read from stdin, without TTY session
+#### Read from stdin, without TTY session
 
 ```
  $ LANG=ja_JP.UTF-8 $SHELL
