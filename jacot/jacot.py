@@ -408,7 +408,7 @@ def start_session(stdin, stdout, command, term, lang, termenc):
                             parser.parse(context)
                             stdout.write(context.getvalue())
                             stdout.flush()
-                except select.error as e:
+                except select.error, e:
                     no, mst = e
                     if not no == errno.EINTR:
                         raise

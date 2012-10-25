@@ -66,7 +66,7 @@ Reference
 TODO
 -----
 ### - Improve conversion algorithm (ck)
-### - Glyph substitution or replacement mechanism with considering East Asian Width. (cocot)
+### - Implement glyph substitution or replacement mechanism with considering East Asian Width. (cocot)
 ### - Auto terminal encodings detection. (MinEd)
 ### - Switch auto detection on/off setting with private sequence "DECSET/DECRST 8850".
 ### - Improve Terminal Filter Framework(TFF), support plugin architecture.
