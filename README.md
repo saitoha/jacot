@@ -8,11 +8,25 @@ Overview
 
 Install
 -------
+
+```
+ $ git clone https://github.com/saitoha/jacot.git
+ $ cd jacot
  $ python setup.py install
+```
+
+or via pip
+
+```
+ $ pip install jacot
+```
 
 Usage
 -----
+
+```
  $ jacot.py [options] [command | -]
+```
 
 ### Options:
 <pre>
@@ -58,19 +72,19 @@ Comming soon...
 
 Reference
 ---------
-### cocot - COde COnverter on Tty http://vmi.jp/software/cygwin/cocot.html
-### cygwin ck terminal emulator http://www.geocities.jp/meir000/ck/ 
-### Unicode Text Editor MinEd http://towo.net/mined/
-### libfep https://github.com/ueno/libfep
+ - cocot - COde COnverter on Tty http://vmi.jp/software/cygwin/cocot.html
+ - cygwin ck terminal emulator http://www.geocities.jp/meir000/ck/ 
+ - Unicode Text Editor MinEd http://towo.net/mined/
+ - libfep https://github.com/ueno/libfep
 
 TODO
 -----
-### - Improve conversion algorithm (ck)
-### - Implement glyph substitution or replacement mechanism with considering East Asian Width. (cocot)
-### - Auto terminal encodings detection. (MinEd)
-### - Switch auto detection on/off setting with private sequence "DECSET/DECRST 8850".
-### - Improve Terminal Filter Framework(TFF), support plugin architecture.
-### - libfep like API/language binding, socket connection support
-### - Support Python 3.x
+ - Improve conversion algorithm (ck)
+ - Implement glyph substitution or replacement mechanism with considering East Asian Width. (cocot)
+ - Auto terminal encodings detection. (MinEd)
+ - Switch auto detection on/off setting with private sequence "DECSET/DECRST 8850".
+ - Improve Terminal Filter Framework(TFF), support plugin architecture.
+ - libfep like API/language binding, socket connection support
+ - Support Python 3.x
 
 
