@@ -15,10 +15,12 @@ Usage
  $ jacot.py [options] [command | -]
 
 ### Options:
+<pre>
   -h, --help            show this help message and exit
   -t TERM, --term=TERM  override TERM environment variable
   -l LANG, --lang=LANG  override LANG environment variable
   -o ENC, --outenc=ENC  set output encoding
+</pre>
 
 ### Example
 
