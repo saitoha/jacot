@@ -19,7 +19,7 @@
 # ***** END LICENSE BLOCK *****
 
 import os, termios, pty, signal, fcntl, struct, select
-from tffi import *
+from tffinterface import *
 
 BUFFER_SIZE=1024
 

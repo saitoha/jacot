@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
-from tffi import * # terminal filter framework interface
+from tffinterface import * # terminal filter framework interface
 
 ################################################################################
 #
