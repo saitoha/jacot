@@ -77,7 +77,7 @@ Usage
 """
 
 __author__  = "Hayaki Saito (user@zuse.jp)"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __license__ = "GPL v3"
 
 import jacot
