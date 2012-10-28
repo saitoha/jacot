@@ -18,9 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
-import sys, os, errno, signal, fcntl, select, pty, termios
-import struct
-import optparse
+import sys, os, errno, select
 import traceback
 import codecs
 try:
@@ -114,22 +112,27 @@ class JapaneseScanner(tff.Scanner):
         for x in self.__data:
             c = ord(x)
             if self.__count != 0 and self.__cp932_state != 0:
-                if (0x40 <= c and c <= 0x7e) or (0x80 <= c and c <= 0xfc):
-                   yield ord((chr(self.__cp932_state) + x).decode('cp932'))
-                   self.__cp932_state = 0
-                   self.__eucjp_state = 0
-                   self.__count = 0
-                   #self.__hint = HINT_CP932
-                   continue     
+                try:
+                    if 0x40 <= c and c <= 0xfc:
+                        yield ord((chr(self.__cp932_state) + x).decode('cp932'))
+                        self.__cp932_state = 0
+                        self.__eucjp_state = 0
+                        self.__count = 0
+                        if c <= 0x7e:
+                            self.__hint = HINT_CP932
+                        continue     
+                except:
+                    pass
+                self.__hint = HINT_UTF8
                 self.__cp932_state = 0
             if self.__count != 0 and self.__eucjp_state != 0:
                 if 0xa1 <= c and c <= 0xfe:
-                   yield ord((chr(self.__eucjp_state) + x).decode('eucjp'))
-                   self.__cp932_state = 0
-                   self.__eucjp_state = 0
-                   self.__count = 0
-                   #self.__hint = HINT_EUCJP
-                   continue     
+                    yield ord((chr(self.__eucjp_state) + x).decode('eucjp'))
+                    self.__cp932_state = 0
+                    self.__eucjp_state = 0
+                    self.__count = 0
+                    self.__hint = HINT_EUCJP
+                    continue     
                 self.__eucjp_state = 0
             if c < 0x80:
                 # 0xxxxxxx
@@ -152,25 +155,16 @@ class JapaneseScanner(tff.Scanner):
                     self.__count = 1
                     self.__utf8_state = 0
                 else:
-                    if self.__count != 0 and self.__cp932_state != 0:
-                        if 0x40 <= c and c <= 0x7e:
-                           yield ord((chr(self.__cp932_state) + x).decode('cp932'))
-                           self.__cp932_state = 0
-                           self.__eucjp_state = 0
-                           self.__count = 0
-                           #self.__hint = HINT_CP932
-                           continue     
-                        self.__cp932_state = 0
                     self.__utf8_state = self.__utf8_state << 6 | c & 0x3f
                     self.__count -= 1
                     if self.__count == 0:
                         if self.__utf8_state < 0x80:
                             yield 0x3f
                         else:
+                            self.__hint = HINT_UTF8
                             yield self.__utf8_state
                         self.__count = 0
                         self.__utf8_state = 0
-                        #self.__hint = HINT_UTF8
             elif c >> 5 == 0x06:
                 # 110xxxxx 10xxxxxx
                 if self.__count != 0:
@@ -224,7 +218,7 @@ class JapaneseScanner(tff.Scanner):
 
 ################################################################################
 #
-# Parser implementation
+# OutputParser implementation
 #
 STATE_GROUND = 0
 STATE_ESC = 1
@@ -237,7 +231,7 @@ STATE_CSI_FINAL = 5
 STATE_OSC = 6
 STATE_STR = 7 
 
-class SequenceParser(tff.Parser):
+class SequenceOutputParser(tff.Parser):
     ''' parse ESC/CSI/string seqneces '''
 
     __parse_state = STATE_GROUND
@@ -352,135 +346,79 @@ class SequenceParser(tff.Parser):
                 context.dispatch_char(c)
 
 
-def start_session(stdin, stdout, command, term, lang, termenc):
-    parser = SequenceParser()
-    context = ParseContext(termenc)
-    stdin_fileno = stdin.fileno()
-    vdisable = os.fpathconf(stdin_fileno, 'PC_VDISABLE')
-    backup = termios.tcgetattr(stdin_fileno)
-    try:
-        new = termios.tcgetattr(stdin_fileno)
-        new[3] = new[3] &~ (termios.ECHO | termios.ICANON)
-        new[6][termios.VINTR] = vdisable
-        #new[6][termios.VQUIT] = vdisable
-        new[6][termios.VSUSP] = vdisable
-        termios.tcsetattr(stdin_fileno, termios.TCSANOW, new)
-        pid, master = pty.fork()
-        if not pid:
-            os.environ['TERM'] = term 
-            os.environ['LANG'] = lang 
-            os.execlp('/bin/sh',
-                      '/bin/sh', '-c',
-                      'cd $HOME && exec %s' % command)
+ 
+################################################################################
+#
+# Settings
+#
+class Settings:
 
-        try:
-            def resize():
-                winsize = fcntl.ioctl(stdin_fileno, termios.TIOCGWINSZ, 'hhhh')
-                height, width = struct.unpack('hh', winsize)
-                winsize = struct.pack('HHHH', height, width, 0, 0)
-                fcntl.ioctl(master, termios.TIOCSWINSZ, winsize)
-                # notify Application process that terminal size has been changed.
-                os.kill(pid, signal.SIGWINCH)
-                return height, width
+    command = None
+    term = None
+    lang = None
+    stdin = None
+    stdout = None
+    termenc = None
 
-            signal.signal(signal.SIGWINCH, lambda no, frame: resize())
-
-            height, width = resize()
-    
-            stdin_fileno = stdin.fileno()
-            rfds = [stdin_fileno, master]
-            wfds = []
-            xfds = [stdin_fileno, master]
-            while True: 
-                try:
-                    rfd, wfd, xfd = select.select(rfds, wfds, xfds)
-                    if xfd:
-                        break
-                    for fd in rfd:
-                        if fd == stdin_fileno:
-                            data = os.read(stdin_fileno, BUFFER_SIZE)
-                            if not data:
-                                break
-                            os.write(master, data)
-                        elif fd == master:
-                            data = os.read(master, BUFFER_SIZE)
-                            context.assign(data)
-                            parser.parse(context)
-                            stdout.write(context.getvalue())
-                            stdout.flush()
-                except select.error, e:
-                    no, mst = e
-                    if not no == errno.EINTR:
-                        raise
-
-        finally:
-            os.close(master)
-
-    finally:
-        termios.tcsetattr(stdin_fileno, termios.TCSANOW, backup)
-
-def do_conversion(stdin, stdout, termenc):
-    parser = SequenceParser()
-    data = os.read(stdin.fileno(), BUFFER_SIZE)
-    context = ParseContext(termenc)
-    context.assign(data)
-    parser.parse(context)
-    stdout.write(context.getvalue())
+    def __init__(self, command, term, lang, termenc, stdin, stdout):
+        self.command = command
+        self.term = term
+        self.lang = lang
+        self.termenc = termenc
+        self.stdin = stdin
+        self.stdout = stdout
 
 
-def start():
-    # parse options and arguments
-    parser = optparse.OptionParser(usage='usage: %prog [options] [command | - ]')
+################################################################################
+#
+# Session
+#
+class Session:
 
-    parser.add_option('-t', '--term', dest='term',
-                      help='override TERM environment variable')
+    def start(self, settings):
+        tty = tff.DefaultPTY(settings)
+        output_context = ParseContext(settings.termenc)
+        output_parser = SequenceOutputParser()
+        stdout = settings.stdout
+        for idata, odata in tty.drive():
+            if idata:
+                tty.write(idata)
+            if odata:
+                output_context.assign(odata)
+                output_parser.parse(output_context)
+                stdout.write(output_context.getvalue())
+                stdout.flush()
 
-    parser.add_option('-l', '--lang', dest='lang',
-                      help='override LANG environment variable')
+################################################################################
+#
+# do_conversion
+#
+def convert(data, termenc = "UTF-8"):
+    """ 
+    >>> convert("abc")
+    'abc'
+    >>> print convert("あいうえお")
+    あいうえお
+    >>> print convert('\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a')
+    あいうえお
+    >>> print convert('\xa4\xa2\xa4\xa4\xa4\xa6\xa4\xa8\xa4\xaa')
+    あいうえお
+    >>> print convert('\x82\xa0\x82\xa2\x82\xa4\x82\xa6\x82\xa8')
+    あいうえお
+    >>> print convert('\xa4\xa2\xa4\xa4\xa4\xa6\xa4\xa8\xa4\xaa \x82\xa0\x82\xa2\x82\xa4\x82\xa6\x82\xa8 \xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a')
+    あいうえお あいうえお あいうえお
+    """
+    output_parser = SequenceOutputParser()
+    output_context = ParseContext(termenc)
+    output_context.assign(data)
+    output_parser.parse(output_context)
+    return output_context.getvalue()
 
-    parser.add_option('-o', '--outenc', dest='enc', default='UTF-8',
-                      help='set output encoding')
-
-    (options, args) = parser.parse_args()
-
-    # retrive starting command
-    if len(args) > 0:
-        command = args[0]
-    elif not os.getenv('SHELL') is None:
-        command = os.getenv('SHELL')
-    else:
-        command = '/bin/sh'
-
-    # retrive TERM setting
-    if not options.term is None:
-        term = options.term
-    elif not os.getenv('TERM') is None:
-        term = os.getenv('TERM')
-    else:
-        term = 'xterm'
-
-    # retrive LANG setting
-    if not options.lang is None:
-        lang = options.term
-    elif not os.getenv('LANG') is None:
-        lang = os.getenv('LANG')
-    else:
-        lang = 'ja_JP.UTF-8'
-
-    # retrive terminal encoding setting
-    outenc = options.enc
-
-    if command == '-':
-        # wait for incoming data
-        do_conversion(sys.stdin, sys.stdout, outenc)
-    else:
-        # check if stdin is available
-        if select.select([sys.stdin, ], [], [], 0.0)[0]:
-            do_conversion(sys.stdin, sys.stdout, outenc)
-        else:
-            start_session(sys.stdin, sys.stdout, command, term, lang, outenc)
+def _test():
+    import doctest
+    doctest.testmod()
 
 ''' main '''
 if __name__ == '__main__':    
-    start()
+    _test()
 

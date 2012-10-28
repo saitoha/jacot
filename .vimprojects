@@ -1,0 +1,18 @@
+tff=.{
+ .gitignore
+ Makefile
+ COPYING
+ MANIFEST.in
+ README.md
+ setup.py
+ jacot=jacot {
+  __init__.py
+  jacot.py
+  tff.py
+  tffinterface.py
+  tffio.py
+  tffpty.py
+ }
+ tff=tff {
+ }
+}

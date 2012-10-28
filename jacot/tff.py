@@ -18,70 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
-from tffi import * # terminal filter framework interface
-
-################################################################################
-#
-# Scanner implementation
-#
-class DefaultScanner(Scanner):
-    ''' scan input stream and iterate characters '''
-    __data = None
-
-    def assign(self, value):
-        self.__data = list(value)
-
-    def __iter__(self):
-        for x in self.__data:
-            yield ord(x)
-
-################################################################################
-#
-# Parser implementation
-#
-class DefaultParser(Parser):
-    ''' default parser, don't parse ESC/CSI/string seqneces '''
-    def __init__(self):
-        pass
-
-    def parse(self, context):
-        for c in context:
-            context.dispatch_char(c)
- 
-################################################################################
-#
-# Handler implementation
-#
-class DefaultHandler(EventObserver):
-    ''' default handler, pass through all ESC/CSI/string seqnceses '''
-    def __init__(self):
-        pass
-
-# EventObserver
-    def handle_csi(self, context, parameter, intermediate, final):
-        context.write(0x1b)
-        context.write(0x5b)
-        for c in parameter:
-            context.write(c)
-        for c in intermediate:
-            context.write(c)
-        context.write(final)
-
-    def handle_esc(self, context, prefix, final):
-        context.write(0x1b)
-        for c in prefix:
-            context.write(c)
-        context.write(final)
-
-    def handle_control_string(self, context, prefix, value):
-        context.write(0x1b)
-        context.write(prefix)
-        for c in value:
-            context.write(c)
-
-    def handle_char(self, context, c):
-        if c < 0x20 or c == 0x7f:
-            context.write(c)
-        else: 
-            context.write(c)
+# terminal filter framework
+from tffinterface import *
+from tffpty import *
+from tffio import *
 

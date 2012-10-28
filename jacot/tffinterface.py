@@ -28,6 +28,7 @@ import abc
 # - Scanner
 # - OutputStream
 # - Parser
+# - PTY
 #
 class EventObserver:
     ''' adapt to event driven ECMA-35/48 parser model '''
@@ -74,6 +75,7 @@ class OutputStream:
 
 
 class EventDispatcher:
+    ''' Dispatch interface of terminal sequence event oriented parser '''
 
     __metaclass__ = abc.ABCMeta
 
@@ -94,9 +96,35 @@ class EventDispatcher:
         pass
 
 class Parser:
+    ''' abstruct Parser '''
 
     __metaclass__ = abc.ABCMeta
 
+    @abc.abstractmethod
     def parse(self, context):
         pass
+
+class PTY:
+    ''' abstruct PTY device '''
+
+    @abc.abstractmethod
+    def fitsize(self):
+        pass
+
+    @abc.abstractmethod
+    def resize(self, height, width):
+        pass
+
+    @abc.abstractmethod
+    def read(self):
+        pass
+
+    @abc.abstractmethod
+    def write(self, data):
+        pass
+
+    @abc.abstractmethod
+    def drive(self):
+        pass
+
 
