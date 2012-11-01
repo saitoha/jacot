@@ -1,11 +1,17 @@
+# -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-from jacot import __version__, __license__, __author__, __doc__
+import doctest
+from jacot import __version__, __license__, __author__, __doc__, jacot
+
+print "---------------test start-----------------"
+print doctest.testmod()
+print "---------------test end-------------------"
 
 setup(name              = 'jacot',
       version           = __version__,
       description       = "Japanese Auto character set Conversion On Tty",
-      long_description  = __doc__,
+      long_description  = open("README.rst").read(),
       py_modules        = ['jacot'],
       classifiers       = ['Development Status :: 4 - Beta',
                            'Topic :: Terminals',

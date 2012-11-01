@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
-import sys, os, errno, select
+import sys, os
 import traceback
 import codecs
 try:
@@ -112,27 +112,31 @@ class JapaneseScanner(tff.Scanner):
         for x in self.__data:
             c = ord(x)
             if self.__count != 0 and self.__cp932_state != 0:
-                try:
-                    if 0x40 <= c and c <= 0xfc:
-                        yield ord((chr(self.__cp932_state) + x).decode('cp932'))
-                        self.__cp932_state = 0
-                        self.__eucjp_state = 0
-                        self.__count = 0
-                        if c <= 0x7e:
-                            self.__hint = HINT_CP932
-                        continue     
-                except:
-                    pass
+                if 0x40 <= c and c <= 0xfc:
+                    try:
+                        self.__cp932_state = ord((chr(self.__cp932_state) + x).decode('cp932'))
+                        if self.__count == 1:
+                            yield self.__cp932_state
+                            self.__cp932_state = 0
+                            self.__eucjp_state = 0
+                            self.__utf8_state = 0
+                            self.__count = 0
+                            continue     
+                    except:
+                        pass
                 self.__hint = HINT_UTF8
                 self.__cp932_state = 0
             if self.__count != 0 and self.__eucjp_state != 0:
                 if 0xa1 <= c and c <= 0xfe:
-                    yield ord((chr(self.__eucjp_state) + x).decode('eucjp'))
-                    self.__cp932_state = 0
-                    self.__eucjp_state = 0
-                    self.__count = 0
-                    self.__hint = HINT_EUCJP
-                    continue     
+                    try:
+                        yield ord((chr(self.__eucjp_state) + x).decode('eucjp'))
+                        self.__cp932_state = 0
+                        self.__eucjp_state = 0
+                        self.__count = 0
+                        self.__hint = HINT_EUCJP
+                        continue     
+                    except:
+                        pass
                 self.__eucjp_state = 0
             if c < 0x80:
                 # 0xxxxxxx
@@ -395,6 +399,8 @@ class Session:
 #
 def convert(data, termenc = "UTF-8"):
     """ 
+    >>> convert("")
+    ''
     >>> convert("abc")
     'abc'
     >>> print convert("あいうえお")
@@ -405,8 +411,10 @@ def convert(data, termenc = "UTF-8"):
     あいうえお
     >>> print convert('\x82\xa0\x82\xa2\x82\xa4\x82\xa6\x82\xa8')
     あいうえお
-    >>> print convert('\xa4\xa2\xa4\xa4\xa4\xa6\xa4\xa8\xa4\xaa \x82\xa0\x82\xa2\x82\xa4\x82\xa6\x82\xa8 \xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a')
-    あいうえお あいうえお あいうえお
+    >>> print convert('\xa4\xa2\xa4\xa4\xa4\xa6\xa4\xa8\xa4\xaa\x82\xa0\x82\xa2\x82\xa4\x82\xa6\x82\xa8\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a')
+    あいうえおあいうえおあいうえお
+    >>> print convert('\x82\xa0\x82\xa2\x82\xa4\x82\xa6\x82\xa8\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a\xa4\xa2\xa4\xa4\xa4\xa6\xa4\xa8\xa4\xaa')
+    あいうえおあいうえおあいうえお
     """
     output_parser = SequenceOutputParser()
     output_context = ParseContext(termenc)
@@ -414,11 +422,11 @@ def convert(data, termenc = "UTF-8"):
     output_parser.parse(output_context)
     return output_context.getvalue()
 
-def _test():
+def test():
     import doctest
     doctest.testmod()
 
 ''' main '''
 if __name__ == '__main__':    
-    _test()
+    test()
 

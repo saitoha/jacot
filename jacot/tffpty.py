@@ -94,14 +94,12 @@ class DefaultPTY(PTY):
                     for fd in rfd:
                         if fd == stdin_fileno:
                             data = os.read(stdin_fileno, BUFFER_SIZE)
-                            if not data:
-                                break
-                            yield data, None
+                            if data:
+                                yield data, None
                         elif fd == master:
                             data = self.read()
-                            if not data:
-                                break
-                            yield None, data
+                            if data:
+                                yield None, data
                 except select.error, e:
                     no, msg = e
                     if not no == errno.EINTR:
