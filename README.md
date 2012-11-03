@@ -1,6 +1,6 @@
 
-jacot - Japanese Auto character set Conversion On Tty
-=====================================================
+jacot
+=====
 
 Overview
 --------
@@ -25,7 +25,7 @@ Usage
 -----
 
 ```
- $ jacot.py [options] [command | -]
+ $ jacot [options] [command | -]
 ```
 
 ### Options:
@@ -34,6 +34,7 @@ Usage
   -t TERM, --term=TERM  override TERM environment variable
   -l LANG, --lang=LANG  override LANG environment variable
   -o ENC, --outenc=ENC  set output encoding
+  -s, --enable-skk      enable SKK input method
 </pre>
 
 ### Example:

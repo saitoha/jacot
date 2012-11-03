@@ -1,4 +1,6 @@
 include COPYING
 include README.md
 include README.rst
+include jacot/skk/SKK-JISYO.L
+include jacot/skk/SKK-JISYO.S
 include *.py
