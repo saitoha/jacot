@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
-import os, termios, pty, signal, fcntl, struct, select
+import os, termios, pty, signal, fcntl, struct, select, errno
 import codecs
 try:
     from cStringIO import StringIO
