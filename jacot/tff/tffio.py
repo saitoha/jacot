@@ -397,7 +397,11 @@ class DefaultPTY(PTY):
                                 yield None, data
                 except select.error, e:
                     no, msg = e
-                    if not no == errno.EINTR:
+                    if no == errno.EINTR:
+                        pass
+                    elif no == errno.EIO:
+                        pass
+                    else:
                         raise
         finally:
             os.close(master)
