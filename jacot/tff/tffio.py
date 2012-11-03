@@ -395,11 +395,13 @@ class DefaultPTY(PTY):
                             data = self.read()
                             if data:
                                 yield None, data
+                except OSError, e:
+                    no, msg = e
+                    if no == errno.EIO:
+                        return
                 except select.error, e:
                     no, msg = e
                     if no == errno.EINTR:
-                        pass
-                    elif no == errno.EIO:
                         pass
                     else:
                         raise
