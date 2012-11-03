@@ -102,9 +102,6 @@ COOK_MARK = u'▽'
 SELECT_MARK = u'▼'
 OKURI_MARK = u'*'
 
-def trace(s):
-    sys.stdout.write('\x1b]0;%s\x1b\\' % s)
-
 ################################################################################
 #
 # Candidate
@@ -134,7 +131,7 @@ class Candidate():
         # 補足説明
         index = value.find(";")
         if index >= 0:
-            trace(value[index:])
+            self.__write('\x1b]0;%s\x1b\\' % value[index:])
             value = value[:index]
 
         return SELECT_MARK + value + self.__okuri
@@ -156,7 +153,9 @@ class Candidate():
 #
 class SKKHandler(tff.DefaultHandler):
 
-    def __init__(self):
+    def __init__(self, stdout, termenc):
+        self.__stdout = stdout
+        self.__termenc = termenc
         self.__context = CharacterContext()
         self.__mode = SKK_MODE_ASCII
         self.__word_buffer = u'' 
@@ -172,21 +171,23 @@ class SKKHandler(tff.DefaultHandler):
         candidate_length = self.__candidate_buffer.getwidth()
         cooking_length = len(self.__word_buffer) * 2 + len(self.__context.getbuffer())
         s = ' ' * max(candidate_length, cooking_length)
-        sys.stdout.write('\x1b7%s\x1b8\x1b[?25h' % s)
-        sys.stdout.flush()
+        self.__write('\x1b7%s\x1b8\x1b[?25h' % s)
+
+    def __write(self, s):
+        self.__stdout.write(s.encode(self.__termenc))
+        self.__stdout.flush()
 
     def __display(self):
         if not self.__candidate_buffer.isempty():
             value = self.__candidate_buffer.getcurrent()
-            sys.stdout.write('\x1b7\x1b[1;4;32;44m%s\x1b8\x1b[?25l' % value)
+            self.__write('\x1b7\x1b[1;4;32;44m%s\x1b8\x1b[?25l' % value)
         else:
             s1 = self.__word_buffer
             s2 = self.__context.getbuffer() 
             if not len(s1) + len(s2) == 0:
-                sys.stdout.write('\x1b7\x1b[1;4;31m%s\x1b[1;4;33m%s\x1b8\x1b[?25l' % (s1, s2))
+                self.__write('\x1b7\x1b[1;4;31m%s\x1b[1;4;33m%s\x1b8\x1b[?25l' % (s1, s2))
             else:
-                sys.stdout.write('\x1b[?25h')
-        sys.stdout.flush()
+                self.__write('\x1b[?25h')
 
     def __fix(self):
         s = self.__context.getbuffer()
@@ -235,7 +236,6 @@ class SKKHandler(tff.DefaultHandler):
         return False
 
     def __okuri_henkan(self):
-        #trace("okuri-henkan: " + self.__word_buffer)
         key, okuri = self.__word_buffer[1:].split(OKURI_MARK)
         if okuri_jisyo.has_key(key):
             self.__candidate_buffer.assign(okuri_jisyo[key], okuri)
@@ -354,7 +354,7 @@ class SKKHandler(tff.DefaultHandler):
                             s = backup[1:]
                             s += self.__word_buffer
                             s += self.__context.getbuffer()
-                            sys.stdout.write('\x1b7\x1b[1;4;35m%s\x1b8\x1b[?25l' % s)
+                            self.__write('\x1b7\x1b[1;4;35m%s\x1b8\x1b[?25l' % s)
 
                         # 先行する入力があるか
                         elif len(self.__word_buffer) > 1:
@@ -379,18 +379,14 @@ class SKKHandler(tff.DefaultHandler):
                                 # 単語バッファに追加
                                 self.__word_buffer += s
 
-                            #trace("word_buffer: [%s], buckup: [%s], context: [%s]"
-                            #                % (self.__word_buffer, backup, self.__context.getbuffer()))
                     elif self.__context.put(c):
-                        #trace("word_buffer: [%s], buckup: [%s], context: [%s]"
-                        #                    % (self.__word_buffer, backup, self.__context.getbuffer()))
                         if not backup is None:
                             self.__candidate_buffer.reset()
                             context.writestring(backup[1:])
                             s = backup[1:]
                             s += self.__word_buffer
                             s += self.__context.getbuffer()
-                            sys.stdout.write('\x1b7\x1b[1;4;31m%s\x1b8\x1b[?25l' % s)
+                            self.__write('\x1b7\x1b[1;4;31m%s\x1b8\x1b[?25l' % s)
                             self.__word_buffer = u''
                         if self.__context.isfinal():
                             s = self.__context.drain()

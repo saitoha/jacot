@@ -108,7 +108,7 @@ def main():
     # retrive skk setting
     if options.skk:
         import skk
-        inputhandler = skk.SKKHandler()
+        inputhandler = skk.SKKHandler(sys.stdout, termenc)
     else:
         inputhandler = tff.DefaultHandler()
 
