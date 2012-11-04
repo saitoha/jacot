@@ -269,6 +269,8 @@ class InputHandler(tff.DefaultHandler):
         self.__write(u'\x1b]0;[jacot]\x1b\\')
 
     def handle_char(self, context, c):
+        if c == 0xa5:
+            c = 0x5c
         if c == 0x07:
             self.__reset()
         elif c == 0x0a: # LF C-j

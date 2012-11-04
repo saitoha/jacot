@@ -131,10 +131,10 @@ def main():
                             termenc=termenc,
                             stdin=sys.stdin,
                             stdout=sys.stdout,
-                            inputscanner=tff.DefaultScanner(),#japanese.JapaneseScanner(),
+                            inputscanner=japanese.JapaneseScanner(),
                             inputparser=tff.DefaultParser(),
                             inputhandler=inputhandler,
-                            outputscanner=tff.DefaultScanner(),#japanese.JapaneseScanner(),
+                            outputscanner=japanese.JapaneseScanner(),
                             outputparser=tff.DefaultParser(),
                             outputhandler=outputhandler)
     session = tff.Session()
