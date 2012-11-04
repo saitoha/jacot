@@ -169,14 +169,14 @@ class InputHandler(tff.DefaultHandler):
         if not self.__candidate.isempty():
             result, remarks = self.__candidate.getcurrent()
 
-            self.__write('\x1b7\x1b[4;32;44m%s\x1b[m\x1b8\x1b[?25l' % result)
+            self.__write('\x1b7\x1b[1;4;32;44m%s\x1b[m\x1b8\x1b[?25l' % result)
             if remarks:
                 self.__write('\x1b]0;[jacot] %s - %s\x1b\\' % (result, remarks))
         else:
             s1 = self.__word_buffer
             s2 = self.__context.getbuffer() 
             if not len(s1) + len(s2) == 0:
-                self.__write('\x1b7\x1b[4;31;40m%s\x1b[4;33;40m%s\x1b[m\x1b8\x1b[?25l' % (s1, s2))
+                self.__write('\x1b7\x1b[1;4;31m%s\x1b[1;4;33m%s\x1b[m\x1b8\x1b[?25l' % (s1, s2))
             else:
                 self.__write('\x1b[?25h')
 
@@ -398,7 +398,7 @@ class InputHandler(tff.DefaultHandler):
                             s = backup[1:]
                             s += self.__word_buffer
                             s += self.__context.getbuffer()
-                            self.__write('\x1b7\x1b[4;35;40m%s\x1b[m\x1b8\x1b[?25l' % s)
+                            self.__write('\x1b7\x1b[1;4;35m%s\x1b[m\x1b8\x1b[?25l' % s)
 
                         # 先行する入力があるか
                         elif len(self.__word_buffer) > 1:
@@ -433,7 +433,7 @@ class InputHandler(tff.DefaultHandler):
                             s = backup[1:]
                             s += self.__word_buffer
                             s += self.__context.getbuffer()
-                            self.__write('\x1b7\x1b[4;31m%s\x1b[m\x1b8\x1b[?25l' % s)
+                            self.__write('\x1b7\x1b[1;4;31m%s\x1b[m\x1b8\x1b[?25l' % s)
                             self.__word_buffer = u''
                         if self.__context.isfinal():
                             if backup or len(self.__word_buffer) == 0:

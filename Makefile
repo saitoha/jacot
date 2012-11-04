@@ -10,7 +10,8 @@ clean:
 	rm -rf dist/ build/ jacot.egg-info
 
 update:
-	python2.7 setup.py register
+	python setup.py register
+	python setup.py sdist upload
 	python2.6 setup.py bdist_egg upload
 	python2.7 setup.py bdist_egg upload
 
