@@ -71,7 +71,6 @@ Usage
 
 ```
  $ jacot --enable-skk
-
 ```
 
 Dependency
