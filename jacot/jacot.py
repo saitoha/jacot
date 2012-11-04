@@ -18,8 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
-import tff
-
 ################################################################################
 #
 # do_conversion
@@ -55,6 +53,8 @@ def test():
 
 def main():
     import sys, os, optparse, select
+    import tff
+
     # parse options and arguments
     parser = optparse.OptionParser(usage='usage: %prog [options] [command | - ]')
 
@@ -140,9 +140,9 @@ along with this program. If not, see http://www.gnu.org/licenses/.
 
     # retrive skk setting
     if options.skk:
-        import skk
-        inputhandler = skk.InputHandler(sys.stdout, termenc)
-        outputhandler = skk.OutputHandler()
+        import sskk.skk
+        inputhandler = sskk.skk.InputHandler(sys.stdout, termenc)
+        outputhandler = sskk.skk.OutputHandler()
     else:
         inputhandler = tff.DefaultHandler()
         outputhandler = tff.DefaultHandler()

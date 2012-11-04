@@ -83,24 +83,30 @@ jacot
  $ jacot --enable-skk
 ```
 
-Dependency
-----------
- - Masahiko Sato et al./SKK Development Team's SKK-JISYO.L
-
-   This package includes the large SKK dictionary, SKK-JISYO.L.
-   http://openlab.jp/skk/skk/dic/SKK-JISYO.L
-
 How It Works
 ------------
 Comming soon...
 
-Reference
----------
+Dependence
+----------
+ - Hayaki Saito's TFF, Terminal Filter Framework
+   https://github.com/saitoha/tff
+
+ - Hayaki Saito's Sentimental-SKK
+   https://github.com/saitoha/sentimental-skk
+
+   Sentimental-SKK package includes the large SKK dictionary, 
+   SKK-JISYO.L (Masahiko Sato et al./SKK Development Team).
+   http://openlab.jp/skk/skk/dic/SKK-JISYO.L
+
+References
+----------
  - Luit - locale and ISO 2022 support for Unicode terminals http://www.pps.univ-paris-diderot.fr/~jch/software/luit/
  - cocot - COde COnverter on Tty http://vmi.jp/software/cygwin/cocot.html
  - cygwin ck terminal emulator http://www.geocities.jp/meir000/ck/ 
  - Unicode Text Editor MinEd http://towo.net/mined/
  - libfep https://github.com/ueno/libfep
+ - Daredevil SKK (DDSKK) http://openlab.ring.gr.jp/skk/ddskk-ja.html
 
 TODO
 -----
