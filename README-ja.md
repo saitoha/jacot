@@ -35,10 +35,16 @@ jacot
 ### Options:
 <pre>
   -h, --help            ヘルプメッセージを出力します。 
+  --version             バージョンを表示します。
   -t TERM, --term=TERM  環境変数TERMを上書きします。
   -l LANG, --lang=LANG  環境変数LANGを上書きします。
   -o ENC, --outenc=ENC  出力エンコーディングを設定します。 
+  --disable-input-conversion
+                        入力方向の自動変換を抑制します。
+  --disable-output-conversion
+                        出力方向の自動変換を抑制します。
   -s, --enable-skk      SKK日本語入力メソッド、円サイン->バックスラッシュ変換を有効にします。 
+
 </pre>
 
 ### Example:

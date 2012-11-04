@@ -171,7 +171,7 @@ class InputHandler(tff.DefaultHandler):
 
             self.__write('\x1b7\x1b[1;4;32;44m%s\x1b[m\x1b8\x1b[?25l' % result)
             if remarks:
-                self.__write('\x1b]0;[jacot] %s - %s\x1b\\' % (result, remarks))
+                self.__write('\x1b]0;[jacot] %s - %s\x07' % (result, remarks))
         else:
             s1 = self.__word_buffer
             s2 = self.__context.getbuffer() 
@@ -226,7 +226,7 @@ class InputHandler(tff.DefaultHandler):
         result = dictionary.gettango(key)
 
         if not result is None: 
-            self.__write(u'\x1b]0;[jacot] 単語変換 %s\x1b\\' % (key))
+            self.__write(u'\x1b]0;[jacot] 単語変換 %s\x07' % (key))
             self.__candidate.assign(result + u'/' + key)
             self.__clear()
             self.__display()
@@ -245,7 +245,7 @@ class InputHandler(tff.DefaultHandler):
 
         result = dictionary.getokuri(key + buf)
 
-        self.__write(u'\x1b]0;[jacot] 送り仮名つき変換 %s - %s\x1b\\' % (key, buf))
+        self.__write(u'\x1b]0;[jacot] 送り仮名つき変換 %s - %s\x07' % (key, buf))
         if not result is None:
             self.__candidate.assign(result + u'/' + key, okuri)
             self.__clear()
@@ -266,7 +266,7 @@ class InputHandler(tff.DefaultHandler):
             word = result[1:]
         self.__reset()
         context.writestring(word)
-        self.__write(u'\x1b]0;[jacot]\x1b\\')
+        self.__write(u'\x1b]0;[jacot]\x07')
 
     def handle_char(self, context, c):
         if c == 0xa5:

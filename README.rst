@@ -26,11 +26,14 @@ Usage
 
 * Options::
 
-    -h, --help            show this help message and exit
-    -t TERM, --term=TERM  override TERM environment variable
-    -l LANG, --lang=LANG  override LANG environment variable
-    -o ENC, --outenc=ENC  set output encoding
-    -s, --enable-skk      enable SKK input method
+    -h, --help                  show this help message and exit
+    --version                   show version
+    -t TERM, --term=TERM        override TERM environment variable
+    -l LANG, --lang=LANG        override LANG environment variable
+    -o ENC, --outenc=ENC        set output encoding
+    --disable-input-conversion  disable input auto conversion
+    --disable-output-conversion disable output auto conversion
+    -s, --enable-skk            use SKK input method
 
 Dependency
 ----------

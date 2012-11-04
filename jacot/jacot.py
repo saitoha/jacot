@@ -19,7 +19,6 @@
 # ***** END LICENSE BLOCK *****
 
 import tff
-import locale
 
 ################################################################################
 #
@@ -59,6 +58,10 @@ def main():
     # parse options and arguments
     parser = optparse.OptionParser(usage='usage: %prog [options] [command | - ]')
 
+    parser.add_option('--version', dest='version',
+                      action="store_true", default=False,
+                      help='show version')
+
     parser.add_option('-t', '--term', dest='term',
                       help='override TERM environment variable')
 
@@ -68,11 +71,40 @@ def main():
     parser.add_option('-o', '--outenc', dest='enc',
                       help='set output encoding')
 
-    parser.add_option("-s", "--enable-skk",
-                      action="store_true", dest="skk", default=False,
+    parser.add_option("--disable-input-conversion", dest="inputconv",
+                      action="store_false", default=True,
+                      help="disable input auto conversion")
+
+    parser.add_option("--disable-output-conversion", dest="outputconv",
+                      action="store_false", default=True,
+                      help="disable output auto conversion")
+
+    parser.add_option("-s", "--enable-skk", dest="skk",
+                      action="store_true", default=False,
                       help="use SKK input method")
 
     (options, args) = parser.parse_args()
+
+    if options.version:
+        import __init__
+        print '''
+jacot %s 
+Copyright (C) 2012 Hayaki Saito <user@zuse.jp>. 
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see http://www.gnu.org/licenses/.
+        ''' % __init__.__version__
+        return
 
     # retrive starting command
     if len(args) > 0:
@@ -102,6 +134,7 @@ def main():
     if not options.enc is None:
         termenc = options.enc
     else:
+        import locale
         language, encoding = locale.getdefaultlocale()
         termenc = encoding
 
@@ -124,22 +157,36 @@ def main():
             sys.stdout.write(convert(sys.stdin.read(), outenc))
             return
 
-    import japanese
+    if options.inputconv:
+        import japanese
+        inputscanner=japanese.JapaneseScanner()
+    else:
+        inputscanner=tff.DefaultScanner()
+
+    if options.outputconv:
+        import japanese
+        outputscanner=japanese.JapaneseScanner()
+    else:
+        outputscanner=tff.DefaultScanner()
+
+    sys.stdout.write("\x1b]0;[jacot]\x07")
+
     settings = tff.Settings(command=command,
                             term=term,
                             lang=lang,
                             termenc=termenc,
                             stdin=sys.stdin,
                             stdout=sys.stdout,
-                            inputscanner=japanese.JapaneseScanner(),
+                            inputscanner=inputscanner,
                             inputparser=tff.DefaultParser(),
                             inputhandler=inputhandler,
-                            outputscanner=japanese.JapaneseScanner(),
+                            outputscanner=outputscanner,
                             outputparser=tff.DefaultParser(),
                             outputhandler=outputhandler)
     session = tff.Session()
-    sys.stdout.write("\x1b]0;[jacot]\x1b\\")
     session.start(settings)
+
+    sys.stdout.write("\x1b]0;jacotを使ってくれてありがとう\x07")
 
 ''' main '''
 if __name__ == '__main__':    
