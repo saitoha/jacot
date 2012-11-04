@@ -108,9 +108,11 @@ def main():
     # retrive skk setting
     if options.skk:
         import skk
-        inputhandler = skk.SKKHandler(sys.stdout, termenc)
+        inputhandler = skk.InputHandler(sys.stdout, termenc)
+        outputhandler = skk.OutputHandler()
     else:
         inputhandler = tff.DefaultHandler()
+        outputhandler = tff.DefaultHandler()
 
     if command == '-':
         # wait for incoming data
@@ -134,8 +136,9 @@ def main():
                             inputhandler=inputhandler,
                             outputscanner=japanese.JapaneseScanner(),
                             outputparser=tff.DefaultParser(),
-                            outputhandler=tff.DefaultHandler())
+                            outputhandler=outputhandler)
     session = tff.Session()
+    sys.stdout.write("\x1b]0;[jacot]\x1b\\")
     session.start(settings)
 
 ''' main '''

@@ -18,32 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
-import sys
-import os
-import inspect
-import re
+import sys, os
+
 import kanadb
+import eisuudb
 import romanrule
+import dictionary
 
 from jacot import tff
-
-tango_jisyo = {}
-okuri_jisyo = {}
-filename = inspect.getfile(inspect.currentframe())
-dirpath = os.path.abspath(os.path.dirname(inspect.getfile(inspect.currentframe())))
-p = re.compile('^(.+?)([a-z])? /(.+)/')
-for line in open(dirpath + '/SKK-JISYO.L'):
-    if line[1] == ';':
-        continue
-    line = unicode(line, 'eucjp')
-    g = p.match(line)
-    key = g.group(1)
-    okuri = g.group(2)
-    value = g.group(3)
-    if okuri is None:
-        tango_jisyo[key] = value
-    else:
-        okuri_jisyo[key] = value
 
 ################################################################################
 #
@@ -94,9 +76,11 @@ class CharacterContext:
     def back(self):
         self.context = self.context['prev']
 
-SKK_MODE_ASCII = 0
-SKK_MODE_HIRAGANA = 1
-SKK_MODE_KATAKANA = 2
+SKK_MODE_HANKAKU = 0
+SKK_MODE_ZENKAKU = 1
+SKK_MODE_HIRAGANA = 2
+SKK_MODE_KATAKANA = 3
+SKK_MODE_EISUU_HENKAN = 4
 
 COOK_MARK = u'▽'
 SELECT_MARK = u'▼'
@@ -131,15 +115,19 @@ class Candidate():
         # 補足説明
         index = value.find(";")
         if index >= 0:
-            self.__write('\x1b]0;%s\x1b\\' % value[index:])
-            value = value[:index]
+            result = value[:index]
+            remarks = value[index:]
+        else:
+            result = value
+            remarks = None
 
-        return SELECT_MARK + value + self.__okuri
+        return SELECT_MARK + result + self.__okuri, remarks 
 
     def getwidth(self):
         if self.isempty():
             return 0
-        return len(self.getcurrent()) * 2
+        result, remarks = self.getcurrent()
+        return len(result) * 2
 
     def movenext(self):
         self.__index += 1
@@ -149,26 +137,26 @@ class Candidate():
 
 ################################################################################
 #
-# SKKHandler
+# InputHandler
 #
-class SKKHandler(tff.DefaultHandler):
+class InputHandler(tff.DefaultHandler):
 
     def __init__(self, stdout, termenc):
         self.__stdout = stdout
         self.__termenc = termenc
         self.__context = CharacterContext()
-        self.__mode = SKK_MODE_ASCII
+        self.__mode = SKK_MODE_HANKAKU
         self.__word_buffer = u'' 
-        self.__candidate_buffer = Candidate()
+        self.__candidate = Candidate()
 
     def __reset(self):
         self.__clear()
         self.__context.reset()
-        self.__candidate_buffer.reset()
+        self.__candidate.reset()
         self.__word_buffer = u'' 
 
     def __clear(self):
-        candidate_length = self.__candidate_buffer.getwidth()
+        candidate_length = self.__candidate.getwidth()
         cooking_length = len(self.__word_buffer) * 2 + len(self.__context.getbuffer())
         s = ' ' * max(candidate_length, cooking_length)
         self.__write('\x1b7%s\x1b8\x1b[?25h' % s)
@@ -178,9 +166,12 @@ class SKKHandler(tff.DefaultHandler):
         self.__stdout.flush()
 
     def __display(self):
-        if not self.__candidate_buffer.isempty():
-            value = self.__candidate_buffer.getcurrent()
-            self.__write('\x1b7\x1b[1;4;32;44m%s\x1b8\x1b[?25l' % value)
+        if not self.__candidate.isempty():
+            result, remarks = self.__candidate.getcurrent()
+
+            self.__write('\x1b7\x1b[1;4;32;44m%s\x1b8\x1b[?25l' % result)
+#            if remarks:
+#                self.__write('\x1b]0;[jacot] %s - %s\x1b\\' % (result, remarks))
         else:
             s1 = self.__word_buffer
             s2 = self.__context.getbuffer() 
@@ -189,17 +180,21 @@ class SKKHandler(tff.DefaultHandler):
             else:
                 self.__write('\x1b[?25h')
 
-    def __fix(self):
+    def __draincharacters(self):
         s = self.__context.getbuffer()
         if s == 'n':
             self.__context.put(0x6e) # n
         s = self.__context.drain()
+        return s
+
+    def __fix(self):
+        s = self.__draincharacters()
         if len(self.__word_buffer) == 0:
             self.__word_buffer += COOK_MARK
         self.__word_buffer += s
 
     def __iscooking(self):
-        if not self.__candidate_buffer.isempty():
+        if not self.__candidate.isempty():
             return True
         if len(self.__word_buffer) > 0:
             return True
@@ -228,41 +223,56 @@ class SKKHandler(tff.DefaultHandler):
 
     def __tango_henkan(self):
         key = self.__word_buffer[1:]
-        if tango_jisyo.has_key(key):
-            self.__candidate_buffer.assign(tango_jisyo[key], u'')
+        result = dictionary.gettango(key)
+
+        if not result is None: 
+            self.__write(u'\x1b]0;[jacot] 単語変換 %s\x1b\\' % (key))
+            self.__candidate.assign(result + u'/' + key)
             self.__clear()
             self.__display()
             return True
-        return False
+
+        # かな読みだけを候補とする
+        self.__candidate.assign(key)
+
+        return True
 
     def __okuri_henkan(self):
+        buf = self.__context.getbuffer()[0]
+        s = self.__context.drain()
+        self.__word_buffer += s
         key, okuri = self.__word_buffer[1:].split(OKURI_MARK)
-        if okuri_jisyo.has_key(key):
-            self.__candidate_buffer.assign(okuri_jisyo[key], okuri)
+
+        result = dictionary.getokuri(key + buf)
+
+        self.__write(u'\x1b]0;[jacot] 送り仮名つき変換 %s - %s - %s\x1b\\' % (key, buf, okuri))
+        if not result is None:
+            self.__candidate.assign(result + u'/' + key, okuri)
             self.__clear()
             self.__word_buffer = u''
             return True
-        elif tango_jisyo.has_key(key):
-            self.__candidate_buffer.assign(tango_jisyo[key], okuri)
-            self.__clear()
-            self.__word_buffer = u''
-            return True
-        return False
+
+        # かな読みだけを候補とする
+        self.__candidate.assign(key)
+
+        return True
 
     def __kakutei(self, context):
         self.__fix()
-        if self.__candidate_buffer.isempty():
+        if self.__candidate.isempty():
             word = self.__word_buffer[1:]
         else:
-            word = self.__candidate_buffer.getcurrent()[1:]
+            result, remarks = self.__candidate.getcurrent()
+            word = result[1:]
         self.__reset()
         context.writestring(word)
+        self.__write(u'\x1b]0;[jacot]\x1b\\')
 
     def handle_char(self, context, c):
         if c == 0x07:
             self.__reset()
         elif c == 0x0a: # LF C-j
-            if self.__mode == SKK_MODE_ASCII:
+            if self.__mode == SKK_MODE_HANKAKU or self.__mode == SKK_MODE_ZENKAKU:
                 self.__mode = SKK_MODE_HIRAGANA
             else:
                 if self.__iscooking():
@@ -277,42 +287,67 @@ class SKKHandler(tff.DefaultHandler):
         elif c == 0x08 or c == 0x7f: # BS or DEL
             if self.__context.isempty():
                 word = self.__word_buffer
+                if not self.__candidate.isempty():
+                    self.__candidate.reset()
                 if len(word) == 0:
                     context.write(c)
                 else:
                     self.__clear()
-                    self.__word_buffer = self.__word_buffer[:-1]
+                    self.__word_buffer = word[:-1]
                     self.__display()
             else:
                 self.__clear()
                 self.__context.back()
                 self.__display()
         elif c == 0x20:        
-            if self.__mode == SKK_MODE_ASCII:
+            if self.__mode == SKK_MODE_HANKAKU:
                 context.write(c)
+            elif self.__mode == SKK_MODE_ZENKAKU:
+                context.write(eisuudb.to_zenkaku_cp(c))
             else:
                 if self.__iscooking():
                     # 単語変換
-                    if self.__candidate_buffer.isempty():
+                    if self.__candidate.isempty():
+                        s = self.__draincharacters()
+                        self.__word_buffer += s
                         if not self.__tango_henkan():
                             self.__kakutei(context)
                     else:
                         self.__clear()
-                        self.__candidate_buffer.movenext()
+                        self.__candidate.movenext()
                         self.__display()
                 else:
                     context.write(c)
         elif c < 0x20 or 0x7f < c:
-            if self.__mode == SKK_MODE_ASCII:
+            if self.__mode == SKK_MODE_HANKAKU or self.__mode == SKK_MODE_ZENKAKU:
                 context.write(c)
             else:
                 self.__reset()
                 context.write(c)
         else:
-            if self.__mode == SKK_MODE_ASCII:
+            if self.__mode == SKK_MODE_HANKAKU:
+                # 半角直接入力
                 context.write(c)
+            elif self.__mode == SKK_MODE_ZENKAKU:
+                # 全角直接入力
+                context.write(eisuudb.to_zenkaku_cp(c))
+            elif self.__mode == SKK_MODE_EISUU_HENKAN:
+                # 英数変換モード
+                if len(self.__word_buffer) == 0:
+                    self.__word_buffer = COOK_MARK
+                self.__word_buffer += unichr(c)
+                self.__display()
             elif self.__mode == SKK_MODE_HIRAGANA or self.__mode == SKK_MODE_KATAKANA:
-                if c == 0x71: # q
+                # ひらがな変換モード・カタカナ変換モード
+                if c == 0x2f: # /
+                    if self.__iscooking():
+                        self.__word_buffer += unichr(c)
+                        self.__display()
+                    else:
+                        self.__mode = SKK_MODE_EISUU_HENKAN
+                        self.__word_buffer = COOK_MARK
+                        self.__display()
+                elif c == 0x71: # q
                     word = self.__word_buffer
                     if self.__iscooking():
                         self.__fix()
@@ -322,14 +357,21 @@ class SKKHandler(tff.DefaultHandler):
                         context.writestring(s)
                     else:
                         self.__toggle_kana()
+                elif c == 0x4c: # L
+                    if self.__iscooking():
+                        self.__kakutei(context)
+                    self.__mode = SKK_MODE_ZENKAKU
+                    self.__reset()
                 elif c == 0x6c: # l
-                    self.__mode = SKK_MODE_ASCII
+                    if self.__iscooking():
+                        self.__kakutei(context)
+                    self.__mode = SKK_MODE_HANKAKU
                     self.__reset()
                 else:
                     # 変換中か
-                    if not self.__candidate_buffer.isempty():
+                    if not self.__candidate.isempty():
                         # 変換中であれば、現在の候補をバックアップしておく
-                        backup = self.__candidate_buffer.getcurrent()
+                        backup, remarks = self.__candidate.getcurrent()
                         self.__word_buffer = u''
                     else:
                         backup = None
@@ -341,7 +383,7 @@ class SKKHandler(tff.DefaultHandler):
                         # バックアップがあるか
                         if backup:
                             # バックアップがあるとき、変換候補をリセット
-                            self.__candidate_buffer.reset()
+                            self.__candidate.reset()
 
                             # 現在の候補を確定
                             context.writestring(backup[1:])
@@ -363,12 +405,15 @@ class SKKHandler(tff.DefaultHandler):
                                 self.__word_buffer += OKURI_MARK
                             # cが母音か
                             if self.__context.isfinal():
-                                # cが母音のとき、文字バッファを吸い出し、
-                                s = self.__context.drain()
-                                # 単語バッファに追加し、
-                                self.__word_buffer += s
+
                                 # 送り仮名変換
                                 self.__okuri_henkan()
+
+                                ## cが母音のとき、文字バッファを吸い出し、
+                                #s = self.__context.drain()
+                                ## 単語バッファに追加
+                                #self.__word_buffer += s
+
                         else:
                             # 先行する入力が無いとき、単語バッファを編集マーク('▽')とする
                             self.__word_buffer = COOK_MARK
@@ -381,7 +426,7 @@ class SKKHandler(tff.DefaultHandler):
 
                     elif self.__context.put(c):
                         if not backup is None:
-                            self.__candidate_buffer.reset()
+                            self.__candidate.reset()
                             context.writestring(backup[1:])
                             s = backup[1:]
                             s += self.__word_buffer
@@ -389,18 +434,58 @@ class SKKHandler(tff.DefaultHandler):
                             self.__write('\x1b7\x1b[1;4;31m%s\x1b8\x1b[?25l' % s)
                             self.__word_buffer = u''
                         if self.__context.isfinal():
-                            s = self.__context.drain()
                             if backup or len(self.__word_buffer) == 0:
+                                s = self.__context.drain()
                                 context.writestring(s)
                             else:
-                                # 送り仮名つき変換
+                                # 送り仮名変換
                                 if self.__word_buffer[-1] == OKURI_MARK:
-                                    self.__word_buffer += s
                                     self.__okuri_henkan()
+                                    #s = self.__context.drain()
+                                    #self.__word_buffer += s
                                 else:
+                                    s = self.__context.drain()
                                     self.__word_buffer += s
                     else:
                         self.__reset()
                         context.write(c)
                     self.__display()
+
+################################################################################
+#
+# OutputHandler
+#
+class OutputHandler(tff.DefaultHandler):
+
+    def __init__(self):
+        self.__super = super(OutputHandler, self)
+
+#    def handle_csi(self, context, prefix, params, final):
+#        self.__super.handle_csi(context, prefix, params, final)
+#
+#    def handle_esc(self, context, prefix, final):
+#        self.__super.handle_esc(context, prefix, final)
+#
+    def handle_control_string(self, context, prefix, value):
+        if prefix == 0x5d: # ']'
+            pos = value.index(0x3b)
+            if pos == -1:
+                pass
+            elif pos == 0:
+                num = [0]
+            else:
+                try:
+                    num = value[:pos]
+                except:
+                    num = None 
+            if not num is None:
+                if num == [0x30] or num == [0x31] or num == [0x32]:
+                    arg = value[pos + 1:]
+                    arg = [ord(x) for x in "[jacot] "] + arg
+                    value = num + [0x3b] + arg
+        self.__super.handle_control_string(context, prefix, value)
+
+#    def handle_char(self, context, c):
+#        self.__super.handle_char(context, c)
+
 
