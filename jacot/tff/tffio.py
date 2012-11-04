@@ -40,8 +40,8 @@ class DefaultScanner(Scanner):
     ''' scan input stream and iterate characters '''
     __data = None
 
-    def assign(self, value):
-        self.__data = list(value)
+    def assign(self, value, termenc):
+        self.__data = unicode(value, termenc)
 
     def __iter__(self):
         for x in self.__data:
@@ -240,6 +240,7 @@ class ParseContext(OutputStream, EventDispatcher):
                  termenc = 'UTF-8',
                  scanner = DefaultScanner(),
                  handler = DefaultHandler()):
+        self.__termenc = termenc
         self.__scanner = scanner 
         self.__handler = handler
         self.__output = codecs.getwriter(termenc)(StringIO())
@@ -251,7 +252,7 @@ class ParseContext(OutputStream, EventDispatcher):
         self.__output.write(data)
 
     def assign(self, data):
-        self.__scanner.assign(data)
+        self.__scanner.assign(data, self.__termenc)
         self.__output.truncate(0)
 
 # OutputStream

@@ -37,7 +37,7 @@ class JapaneseScanner(tff.Scanner):
     __count = 0
     __hint = HINT_UTF8 
 
-    def assign(self, value):
+    def assign(self, value, termenc):
         self.__data = list(value)
         self.__utf8_state = 0
         self.__cp932_state = 0

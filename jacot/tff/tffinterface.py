@@ -60,6 +60,10 @@ class Scanner:
     def __iter__(self):
         yield
 
+    @abc.abstractmethod
+    def assign(self, value, termenc):
+        yield
+
 class OutputStream:
     ''' abstruct TTY output stream '''
 

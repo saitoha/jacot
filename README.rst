@@ -34,7 +34,7 @@ Usage
 
 Dependency
 ----------
- - Masahiko Sato et.al./SKK Development Team's SKK-JISYO.L
+ - Masahiko Sato et al./SKK Development Team's SKK-JISYO.L
 
    This package includes the large SKK dictionary, SKK-JISYO.L.
    http://openlab.jp/skk/skk/dic/SKK-JISYO.L
