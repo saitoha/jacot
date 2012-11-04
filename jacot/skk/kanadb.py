@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
+import thread
 
 _kanadb = [[u'あ', u'ア'], [u'い', u'イ'], [u'う', u'ウ'], [u'え', u'エ'], [u'お', u'オ'],
            [u'ぁ', u'ァ'], [u'ぃ', u'ィ'], [u'ぅ', u'ゥ'], [u'ぇ', u'ェ'], [u'ぉ', u'ォ'],
@@ -39,9 +40,10 @@ _kanadb = [[u'あ', u'ア'], [u'い', u'イ'], [u'う', u'ウ'], [u'え', u'エ'
 _hira_to_kata = {}
 _kata_to_hira = {}
 
-for hira, kata in _kanadb:
-    _hira_to_kata[hira] = kata
-    _kata_to_hira[kata] = hira
+def _loaddb():
+    for hira, kata in _kanadb:
+        _hira_to_kata[hira] = kata
+        _kata_to_hira[kata] = hira
 
 def to_kata(s):
     ''' convert Japanese Hiragana String into Katakana '''
@@ -58,5 +60,7 @@ def to_hira(s):
             return _hira_to_kata[c]
         return c
     return ''.join([conv(c) for c in s])
+
+thread.start_new_thread(_loaddb, ())
 
 

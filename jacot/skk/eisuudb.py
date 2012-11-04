@@ -18,6 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
+import thread
+
 _eisuudb = [[u'0' , u'０'], [u'1' , u'１'], [u'2' , u'２'], [u'3' , u'３'], [u'4' , u'４'], [u'5' , u'５'],
             [u'6' , u'６'], [u'7' , u'７'], [u'8' , u'８'], [u'9' , u'９'], [u'^' , u'＾'], [u'@' , u'＠'],
             [u'[' , u'［'], [u']' , u'］'], [u':' , u'：'], [u';' , u'；'], [u',' , u'，'], [u'.' , u'．'],
@@ -37,9 +39,10 @@ _eisuudb = [[u'0' , u'０'], [u'1' , u'１'], [u'2' , u'２'], [u'3' , u'３'], 
 _han_to_zen = {}
 _han_to_zen_cp = {}
 
-for han, zen in _eisuudb:
-    _han_to_zen[han] = zen
-    _han_to_zen_cp[ord(han)] = ord(zen)
+def _loaddb():
+    for han, zen in _eisuudb:
+        _han_to_zen[han] = zen
+        _han_to_zen_cp[ord(han)] = ord(zen)
  
 def to_zenkaku(s):
     ''' convert ascii string into Japanese Zenkaku string '''
@@ -54,4 +57,6 @@ def to_zenkaku_cp(code):
     if _han_to_zen_cp.has_key(code):
         return _han_to_zen_cp[code]
     return code
+
+thread.start_new_thread(_loaddb, ())
 

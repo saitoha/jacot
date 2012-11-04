@@ -19,7 +19,6 @@
 # ***** END LICENSE BLOCK *****
 
 # terminal filter framework
-from tffinterface import *
-from tffpty import *
-from tffio import *
+from interface import *
+from io import *
 

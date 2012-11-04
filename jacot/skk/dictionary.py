@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ***** END LICENSE BLOCK *****
 
-import os, inspect, re
+import os, thread, inspect, re
 
 _tangodb = {}
 _okuridb = {}
@@ -51,5 +51,5 @@ def getokuri(key):
         return _okuridb[key]
     return None
 
-_load_dictionary()
+thread.start_new_thread(_load_dictionary, ())
 

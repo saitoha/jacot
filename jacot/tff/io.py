@@ -28,7 +28,7 @@ except:
     except:
         from io import StringIO
 
-from tffinterface import * # terminal filter framework interface
+from interface import * # terminal filter framework interface
 
 BUFFER_SIZE=2048
 
@@ -334,9 +334,15 @@ class DefaultPTY(PTY):
 
         vdisable = os.fpathconf(self.__stdin_fileno, 'PC_VDISABLE')
 
-        new[6][termios.VINTR] = vdisable
-        #new[6][termios.VQUIT] = vdisable
-        new[6][termios.VSUSP] = vdisable
+        new[6][termios.VINTR] = vdisable     # Ctrl-C
+        new[6][termios.VREPRINT] = vdisable  # Ctrl-R
+        new[6][termios.VSTART] = vdisable    # Ctrl-Q
+        new[6][termios.VSTOP] = vdisable     # Ctrl-S
+        new[6][termios.VLNEXT] = vdisable    # Ctrl-V
+        new[6][termios.VWERASE] = vdisable   # Ctrl-W
+        new[6][termios.VKILL] = vdisable     # Ctrl-X
+        new[6][termios.VSUSP] = vdisable     # Ctrl-Z
+        new[6][termios.VQUIT] = vdisable     # Ctrl-\
 
         termios.tcsetattr(self.__stdin_fileno, termios.TCSANOW, new)
         pid, master = pty.fork()
