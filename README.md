@@ -67,6 +67,20 @@ Usage
  三 ┏( ^o^)┛
 ```
 
+#### 4. Use SKK input method
+
+```
+ $ jacot --enable-skk
+
+```
+
+Dependent Works
+---------------
+ - Masahiko Sato et.al./SKK Development Team's SKK-JISYO.L
+
+   This package includes the large SKK dictionary, SKK-JISYO.L.
+   http://openlab.jp/skk/skk/dic/SKK-JISYO.L
+
 How It Works
 ------------
 Comming soon...
