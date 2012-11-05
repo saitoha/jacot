@@ -24,7 +24,7 @@ setup(name                  = 'jacot',
       packages              = find_packages(exclude=[]),
       zip_safe              = True,
       include_package_data  = False,
-      install_requires      = ['tff ==0.0.1', 'sentimental-skk ==0.0.2'],
+      install_requires      = ['tff ==0.0.2', 'sentimental-skk ==0.0.3'],
       entry_points          = """
                               [console_scripts]
                               jacot = jacot:main

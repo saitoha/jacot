@@ -19,7 +19,7 @@
 # ***** END LICENSE BLOCK *****
 
 __author__  = "Hayaki Saito (user@zuse.jp)"
-__version__ = "0.2.8"
+__version__ = "0.2.9"
 __license__ = "GPL v3"
 
 from jacot import *
